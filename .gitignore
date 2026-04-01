@@ -1,0 +1,5 @@
+node_modules/
+.env
+enrollments.json
+package-lock.json
+.vscode/

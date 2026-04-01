@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ایڈمن پینل - الراسخ اکیڈمی</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #104c3e;
+            --gold: #c5a059;
+            --light: #f8f9fa;
+            --dark: #1a1a1a;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--light); color: var(--dark); padding: 2rem; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Login Styles */
+        #login-section { height: 80vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--white); padding: 3rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .form-group { margin-bottom: 1.5rem; text-align: right; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--primary); }
+        input { width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); }
+        .btn { background: var(--primary); color: var(--white); border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 700; width: 100%; transition: 0.3s; }
+        .btn:hover { background: #0a352b; transform: translateY(-2px); }
+
+        /* Dashboard Styles */
+        #dashboard-section { display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: var(--primary); padding: 1.5rem; border-radius: 15px; color: var(--white); }
+        .logout-btn { background: var(--gold); border: none; padding: 0.5rem 1rem; border-radius: 5px; color: var(--white); cursor: pointer; font-weight: 700; }
+        
+        table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        th, td { padding: 1.2rem; text-align: right; border-bottom: 1px solid #eee; }
+        th { background: #f1f1f1; color: var(--primary); font-weight: 700; }
+        tr:hover { background: #fafafa; }
+        
+        .action-btns { display: flex; gap: 0.5rem; }
+        .wa-btn { color: #25d366; font-size: 1.2rem; cursor: pointer; }
+        .del-btn { color: #ff4d4d; font-size: 1.2rem; cursor: pointer; }
+        
+        .empty-state { text-align: center; padding: 3rem; color: #888; }
+        #toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--dark); color: var(--white); padding: 1rem 2rem; border-radius: 30px; display: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Login Section -->
+    <div id="login-section">
+        <div class="login-card">
+            <h2 style="color: var(--primary); margin-bottom: 2rem;">ایڈمن لاگ ان</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>پاس ورڈ</label>
+                    <input type="password" id="password" placeholder="اپنا پاس ورڈ لکھیں" required>
+                </div>
+                <button type="submit" class="btn">لاگ ان کریں</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section">
+        <div class="header">
+            <h2>داخلہ کی درخواستیں (Enrollments)</h2>
+            <button class="logout-btn" onclick="logout()">لاگ آؤٹ</button>
+        </div>
+
+        <div id="data-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>نام</th>
+                        <th>فون (WhatsApp)</th>
+                        <th>کورس</th>
+                        <th>تاریخ</th>
+                        <th>ایکشن</th>
+                    </tr>
+                </thead>
+                <tbody id="enrollments-body">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+            <div id="empty-msg" class="empty-state" style="display:none;">کوئی درخواست موجود نہیں ہے۔</div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const loginSection = document.getElementById('login-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    const loginForm = document.getElementById('login-form');
+    const enrollmentsBody = document.getElementById('enrollments-body');
+    const emptyMsg = document.getElementById('empty-msg');
+    const toast = document.getElementById('toast');
+
+    let authToken = localStorage.getItem('admin_token');
+
+    if (authToken) {
+        showDashboard();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = document.getElementById('password').value;
+
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                authToken = data.token;
+                localStorage.setItem('admin_token', authToken);
+                showDashboard();
+            } else {
+                showToast(data.message);
+            }
+        } catch (err) {
+            showToast('کنکشن کا مسئلہ!');
+        }
+    });
+
+    async function showDashboard() {
+        loginSection.style.display = 'none';
+        dashboardSection.style.display = 'block';
+        loadData();
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch('/api/admin/enrollments', {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (res.status === 403) return logout();
+            
+            const result = await res.json();
+            const data = result.data;
+
+            if (data.length === 0) {
+                emptyMsg.style.display = 'block';
+                enrollmentsBody.innerHTML = '';
+            } else {
+                emptyMsg.style.display = 'none';
+                enrollmentsBody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.phone}</td>
+                        <td>${item.course}</td>
+                        <td>${item.date}</td>
+                        <td class="action-btns">
+                            <i class="fa-brands fa-whatsapp wa-btn" onclick="contactWA('${item.phone}')" title="WhatsApp"></i>
+                            <i class="fa-solid fa-trash del-btn" onclick="deleteEntry(${item.id})" title="Delete"></i>
+                        </td>
+                    </tr>
+                `).reverse().join('');
+            }
+        } catch (err) {
+            showToast('ڈیٹا لوڈ کرنے میں مسئلہ!');
+        }
+    }
+
+    async function deleteEntry(id) {
+        if (!confirm('کیا آپ واقعی اسے حذف کرنا چاہتے ہیں؟')) return;
+        try {
+            const res = await fetch(`/api/admin/enrollments/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (res.ok) {
+                loadData();
+                showToast('کامیابی سے حذف کر دیا گیا۔');
+            }
+        } catch (err) {
+            showToast('حذف کرنے میں مسئلہ!');
+        }
+    }
+
+    function contactWA(phone) {
+        // Clean phone number (remove leading zero, add 92 if needed)
+        let cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('0')) cleanPhone = '92' + cleanPhone.substring(1);
+        if (!cleanPhone.startsWith('92')) cleanPhone = '92' + cleanPhone;
+        
+        window.open(`https://wa.me/${cleanPhone}`, '_blank');
+    }
+
+    function logout() {
+        localStorage.removeItem('admin_token');
+        location.reload();
+    }
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+    }
+</script>
+
+</body>
+</html>
