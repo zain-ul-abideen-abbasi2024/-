@@ -169,6 +169,12 @@ app.delete('/api/admin/enrollments/:id', (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+// Export the app for Vercel
+module.exports = app;
+
+// Only listen on a port if NOT on Vercel (local development)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+    });
+}
