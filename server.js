@@ -2,15 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+const { kv } = require('@vercel/kv');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'enrollments.json');
 
 // Middleware
 app.use(cors());
@@ -24,21 +22,27 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static(path.join(__dirname, '.')));
-
-// Helper function to read/write JSON
-const readEnrollments = () => {
-    if (!fs.existsSync(DATA_FILE)) return [];
-    const data = fs.readFileSync(DATA_FILE);
-    return JSON.parse(data);
+// Helper function to read/write KV
+const readEnrollments = async () => {
+    try {
+        const data = await kv.get('enrollments');
+        return data || [];
+    } catch (err) {
+        console.error('KV Read Error:', err);
+        return [];
+    }
 };
 
-const saveEnrollment = (newEnroll) => {
-    const enrollments = readEnrollments();
+const saveEnrollment = async (newEnroll) => {
+    const enrollments = await readEnrollments();
     newEnroll.id = Date.now();
     newEnroll.date = new Date().toLocaleString('ur-PK');
     enrollments.push(newEnroll);
-    fs.writeFileSync(DATA_FILE, JSON.stringify(enrollments, null, 2));
+    try {
+        await kv.set('enrollments', enrollments);
+    } catch (err) {
+        console.error('KV Write Error:', err);
+    }
     return newEnroll;
 };
 
@@ -110,7 +114,7 @@ app.post('/api/enroll', async (req, res) => {
     }
 
     try {
-        const saved = saveEnrollment({ name, phone, course });
+        const saved = await saveEnrollment({ name, phone, course });
         
         // Background alerts
         sendEmailAlert(saved);
@@ -137,14 +141,14 @@ app.post('/api/admin/login', async (req, res) => {
 });
 
 // 3. Get Enrollments (Protected)
-app.get('/api/admin/enrollments', (req, res) => {
+app.get('/api/admin/enrollments', async (req, res) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(403).send('Access Denied');
 
     const token = authHeader.split(' ')[1];
     try {
         jwt.verify(token, 'secret_key');
-        const enrollments = readEnrollments();
+        const enrollments = await readEnrollments();
         res.json({ success: true, data: enrollments });
     } catch (err) {
         res.status(403).send('Invalid Token');
@@ -152,7 +156,7 @@ app.get('/api/admin/enrollments', (req, res) => {
 });
 
 // 4. Delete Enrollment (Protected)
-app.delete('/api/admin/enrollments/:id', (req, res) => {
+app.delete('/api/admin/enrollments/:id', async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).send('Access Denied');
@@ -160,9 +164,9 @@ app.delete('/api/admin/enrollments/:id', (req, res) => {
     try {
         jwt.verify(token, 'secret_key');
         const { id } = req.params;
-        let enrollments = readEnrollments();
+        let enrollments = await readEnrollments();
         enrollments = enrollments.filter(e => e.id != id);
-        fs.writeFileSync(DATA_FILE, JSON.stringify(enrollments, null, 2));
+        await kv.set('enrollments', enrollments);
         res.json({ success: true });
     } catch (err) {
         res.status(403).send('Invalid Token');
