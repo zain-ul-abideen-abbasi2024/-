@@ -176,8 +176,8 @@ app.delete('/api/admin/enrollments/:id', async (req, res) => {
     }
 });
 
-// Catch-all: serve index.html
-app.get('*', (req, res) => {
+// Catch-all: serve index.html for any unknown route
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
