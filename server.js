@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const nodemailer = require('nodemailer');
@@ -8,54 +7,53 @@ const jwt = require('jsonwebtoken');
 const { MongoClient } = require('mongodb');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // --- MongoDB Setup ---
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI || null;
+let dbClient = null;
 let db = null;
 
-const connectDB = async () => {
+const getDB = async () => {
     if (db) return db;
-    if (!MONGODB_URI) {
-        console.warn('MONGODB_URI not set. Data will not be persisted.');
-        return null;
-    }
+    if (!MONGODB_URI) return null;
     try {
-        const client = new MongoClient(MONGODB_URI);
-        await client.connect();
-        db = client.db('ar-rasikh');
-        console.log('Connected to MongoDB Atlas');
+        if (!dbClient) {
+            dbClient = new MongoClient(MONGODB_URI, {
+                serverSelectionTimeoutMS: 5000,
+                connectTimeoutMS: 5000,
+            });
+            await dbClient.connect();
+        }
+        db = dbClient.db('ar-rasikh');
         return db;
     } catch (err) {
-        console.error('MongoDB connection error:', err);
+        console.error('MongoDB Error:', err.message);
         return null;
     }
 };
 
-// In-memory fallback (when MongoDB is not available)
-let memoryEnrollments = [];
+// In-memory fallback
+let memStore = [];
 
 // --- Middleware ---
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Request Logger
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
-});
-
-// Serve Static Files (Front-End)
+// Serve static files
 app.use(express.static(path.join(__dirname, '.')));
 
-// --- DB Helper Functions ---
+// --- DB Helpers ---
 const getEnrollments = async () => {
-    const database = await connectDB();
-    if (database) {
-        return await database.collection('enrollments').find({}).toArray();
+    try {
+        const database = await getDB();
+        if (database) {
+            return await database.collection('enrollments').find({}).sort({ createdAt: -1 }).toArray();
+        }
+    } catch (err) {
+        console.error('Read error:', err.message);
     }
-    return memoryEnrollments;
+    return memStore;
 };
 
 const addEnrollment = async (data) => {
@@ -65,71 +63,67 @@ const addEnrollment = async (data) => {
         date: new Date().toLocaleString('ur-PK'),
         createdAt: new Date()
     };
-    const database = await connectDB();
-    if (database) {
-        await database.collection('enrollments').insertOne(enrollment);
-    } else {
-        memoryEnrollments.push(enrollment);
+    try {
+        const database = await getDB();
+        if (database) {
+            await database.collection('enrollments').insertOne(enrollment);
+            return enrollment;
+        }
+    } catch (err) {
+        console.error('Write error:', err.message);
     }
+    memStore.push(enrollment);
     return enrollment;
 };
 
-const deleteEnrollmentById = async (id) => {
-    const database = await connectDB();
-    if (database) {
-        await database.collection('enrollments').deleteOne({ id: parseInt(id) });
-    } else {
-        memoryEnrollments = memoryEnrollments.filter(e => e.id != id);
+const removeEnrollment = async (id) => {
+    try {
+        const database = await getDB();
+        if (database) {
+            await database.collection('enrollments').deleteOne({ id: Number(id) });
+            return;
+        }
+    } catch (err) {
+        console.error('Delete error:', err.message);
     }
+    memStore = memStore.filter(e => e.id != id);
 };
 
-// --- Notifications ---
-const sendEmailAlert = async (studentData) => {
+// --- Email Notification ---
+const sendEmail = async (data) => {
     try {
-        if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your-email@gmail.com') return;
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-        });
+        const user = process.env.EMAIL_USER;
+        const pass = process.env.EMAIL_PASS;
+        if (!user || user === 'your-email@gmail.com' || !pass) return;
+        const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
         await transporter.sendMail({
-            from: `"الراسخ اکیڈمی" <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER,
-            subject: 'نیا داخلہ (New Enrollment) - الراسخ اکیڈمی',
-            html: `
-                <div dir="rtl" style="font-family: Arial; border: 2px solid #104c3e; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #104c3e;">نیا داخلہ فارم موصول ہوا ہے</h2>
-                    <p><b>نام:</b> ${studentData.name}</p>
-                    <p><b>فون:</b> ${studentData.phone}</p>
-                    <p><b>کورس:</b> ${studentData.course}</p>
-                    <p><b>تاریخ:</b> ${studentData.date}</p>
-                </div>
-            `
+            from: `"الراسخ اکیڈمی" <${user}>`,
+            to: user,
+            subject: 'نیا داخلہ - الراسخ اکیڈمی',
+            html: `<div dir="rtl" style="font-family:Arial;padding:20px;border:2px solid #104c3e;border-radius:10px">
+                <h2 style="color:#104c3e">نیا داخلہ فارم موصول ہوا</h2>
+                <p><b>نام:</b> ${data.name}</p>
+                <p><b>فون:</b> ${data.phone}</p>
+                <p><b>کورس:</b> ${data.course}</p>
+                <p><b>تاریخ:</b> ${data.date}</p>
+            </div>`
         });
-        console.log('Email sent successfully.');
     } catch (err) {
-        console.error('Email Error:', err.message);
+        console.error('Email error:', err.message);
     }
 };
 
-const sendWhatsAppAlert = async (studentData) => {
-    try {
-        if (!process.env.WHATSAPP_API_KEY || process.env.WHATSAPP_API_KEY === 'your-callmebot-apikey') return;
-        const message = `*نیا داخلہ - الراسخ اکیڈمی*\n\n*نام:* ${studentData.name}\n*فون:* ${studentData.phone}\n*کورس:* ${studentData.course}`;
-        const url = `https://api.callmebot.com/whatsapp.php?phone=${process.env.WHATSAPP_ADMIN_NUMBER}&text=${encodeURIComponent(message)}&apikey=${process.env.WHATSAPP_API_KEY}`;
-        const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
-        await fetch(url);
-        console.log('WhatsApp alert sent.');
-    } catch (err) {
-        console.error('WhatsApp Error:', err.message);
-    }
-};
-
-// --- JWT Secret ---
+// --- JWT ---
 const JWT_SECRET = process.env.JWT_SECRET || 'ar-rasikh-secret-2026';
 
 // --- API Routes ---
 
-// 1. Enrollment Submission
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', mongodb: !!db });
+});
+
+// 1. Enrollment
 app.post('/api/enroll', async (req, res) => {
     const { name, phone, course } = req.body;
     if (!name || !phone || !course) {
@@ -137,9 +131,8 @@ app.post('/api/enroll', async (req, res) => {
     }
     try {
         const saved = await addEnrollment({ name, phone, course });
-        sendEmailAlert(saved);
-        sendWhatsAppAlert(saved);
-        res.status(200).json({ success: true, message: 'آپ کی درخواست موصول ہو گئی ہے۔ شکریہ!' });
+        sendEmail(saved); // fire and forget
+        res.json({ success: true, message: 'آپ کی درخواست موصول ہو گئی ہے۔ شکریہ!' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'سرور میں مسئلہ پیش آیا۔ دوبارہ کوشش کریں۔' });
@@ -157,35 +150,33 @@ app.post('/api/admin/login', (req, res) => {
     res.status(401).json({ success: false, message: 'غلط پاس ورڈ!' });
 });
 
-// 3. Get Enrollments (Protected)
+// 3. Get Enrollments
 app.get('/api/admin/enrollments', async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(403).json({ message: 'Access Denied' });
-    const token = authHeader.split(' ')[1];
+    const token = (req.headers['authorization'] || '').split(' ')[1];
+    if (!token) return res.status(403).json({ message: 'Access Denied' });
     try {
         jwt.verify(token, JWT_SECRET);
-        const enrollments = await getEnrollments();
-        res.json({ success: true, data: enrollments });
+        const data = await getEnrollments();
+        res.json({ success: true, data });
     } catch (err) {
         res.status(403).json({ message: 'Invalid Token' });
     }
 });
 
-// 4. Delete Enrollment (Protected)
+// 4. Delete Enrollment
 app.delete('/api/admin/enrollments/:id', async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = (req.headers['authorization'] || '').split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Access Denied' });
     try {
         jwt.verify(token, JWT_SECRET);
-        await deleteEnrollmentById(req.params.id);
+        await removeEnrollment(req.params.id);
         res.json({ success: true });
     } catch (err) {
         res.status(403).json({ message: 'Invalid Token' });
     }
 });
 
-// 5. Catch-all: serve index.html for any unknown route
+// Catch-all: serve index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -193,9 +184,8 @@ app.get('*', (req, res) => {
 // Export for Vercel
 module.exports = app;
 
-// Local development only
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`Server running at http://localhost:${PORT}`);
-    });
+// Local dev only
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server: http://localhost:${PORT}`));
 }
