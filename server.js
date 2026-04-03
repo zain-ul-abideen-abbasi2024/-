@@ -41,7 +41,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
-app.use(express.static(path.join(__dirname, '.')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- DB Helpers ---
 const getEnrollments = async () => {
@@ -176,9 +176,9 @@ app.delete('/api/admin/enrollments/:id', async (req, res) => {
     }
 });
 
-// Catch-all: serve index.html for any unknown route
+// Catch-all: serve index.html
 app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Export for Vercel
