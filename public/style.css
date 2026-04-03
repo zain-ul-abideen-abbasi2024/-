@@ -1,19 +1,23 @@
 @font-face {
     font-family: 'Jameel Noori Nastaleeq';
     src: url('https://cdn.jsdelivr.net/gh/nafeespp/urdu-fonts/JameelNooriNastaleeq.woff2') format('woff2'),
-         url('https://cdn.jsdelivr.net/gh/nafeespp/urdu-fonts/JameelNooriNastaleeq.woff') format('woff');
+        url('https://cdn.jsdelivr.net/gh/nafeespp/urdu-fonts/JameelNooriNastaleeq.woff') format('woff');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
 }
 
 :root {
-    --primary: #0b4a2b;       /* Deep Emerald Green */
+    --primary: #0b4a2b;
+    /* Deep Emerald Green */
     --primary-light: #12633d;
-    --gold: #d4af37;          /* Rich Gold */
+    --gold: #d4af37;
+    /* Rich Gold */
     --gold-light: #f1d575;
-    --bg-light: #fdfaf1;      /* Light Beige */
-    --bg-dark: #07331d;       /* Dark Green Section */
+    --bg-light: #fdfaf1;
+    /* Light Beige */
+    --bg-dark: #07331d;
+    /* Dark Green Section */
     --white: #ffffff;
     --text-dark: #1a1a1a;
     --text-light: #f4f4f4;
@@ -39,7 +43,8 @@ body {
     background-color: var(--white);
     color: var(--text-dark);
     font-family: var(--font-urdu);
-    line-height: 1.8; /* Optimized for Nastaliq */
+    line-height: 1.8;
+    /* Optimized for Nastaliq */
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
 }
@@ -54,7 +59,9 @@ body {
     padding: 100px 0;
 }
 
-.text-center { text-align: center; }
+.text-center {
+    text-align: center;
+}
 
 /* Header Styling */
 .header {
@@ -121,11 +128,13 @@ body {
     transition: var(--transition);
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
     color: var(--gold);
 }
 
-.nav-link:hover::after, .nav-link.active::after {
+.nav-link:hover::after,
+.nav-link.active::after {
     width: 100%;
 }
 
@@ -150,7 +159,8 @@ body {
     background-position: center;
     background-attachment: fixed;
     color: var(--white);
-    padding-top: 120px; /* Increased to prevent overlap */
+    padding-top: 120px;
+    /* Increased to prevent overlap */
     padding-bottom: 60px;
 }
 
@@ -173,7 +183,7 @@ body {
     font-size: 5.5rem;
     line-height: normal;
     margin-bottom: 2rem;
-    text-shadow: 2px 4px 15px rgba(0,0,0,0.4);
+    text-shadow: 2px 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .hero-title span {
@@ -204,7 +214,7 @@ body {
     padding: 3rem 2rem;
     text-align: center;
     transition: var(--transition);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     position: relative;
     overflow: hidden;
 }
@@ -244,8 +254,14 @@ body {
 }
 
 /* Section Backgrounds */
-.bg-light { background-color: var(--bg-light); }
-.bg-dark { background-color: var(--bg-dark); color: var(--white); }
+.bg-light {
+    background-color: var(--bg-light);
+}
+
+.bg-dark {
+    background-color: var(--bg-dark);
+    color: var(--white);
+}
 
 .section-title {
     font-size: 3.5rem;
@@ -256,7 +272,9 @@ body {
     display: inline-block;
 }
 
-.bg-dark .section-title { color: var(--gold); }
+.bg-dark .section-title {
+    color: var(--gold);
+}
 
 .section-desc {
     max-width: 800px;
@@ -266,7 +284,9 @@ body {
     color: #444;
 }
 
-.bg-dark .section-desc { color: var(--text-dim); }
+.bg-dark .section-desc {
+    color: var(--text-dim);
+}
 
 /* Buttons */
 .btn {
@@ -322,7 +342,11 @@ body {
     margin: 0 auto;
 }
 
-.form-group { margin-bottom: 2rem; text-align: right; }
+.form-group {
+    margin-bottom: 2rem;
+    text-align: right;
+}
+
 .form-group label {
     display: block;
     font-weight: 700;
@@ -372,7 +396,8 @@ body {
     opacity: 0.7;
 }
 
-a, button {
+a,
+button {
     cursor: pointer;
 }
 
@@ -385,16 +410,28 @@ a, button {
 
 /* Responsive Styling */
 @media (max-width: 1024px) {
-    .hero-title { font-size: 4rem; }
-    .grid { grid-template-columns: repeat(2, 1fr); }
+    .hero-title {
+        font-size: 4rem;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
-    .section-padding { padding: 60px 0; }
-    .header { padding: 0.5rem 0; }
-    
-    .mobile-nav-toggle { display: block; }
-    
+    .section-padding {
+        padding: 60px 0;
+    }
+
+    .header {
+        padding: 0.5rem 0;
+    }
+
+    .mobile-nav-toggle {
+        display: block;
+    }
+
     .nav-menu {
         display: block;
         position: fixed;
@@ -405,31 +442,71 @@ a, button {
         background: var(--white);
         padding: 120px 2rem;
         transition: var(--transition);
-        box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
         z-index: 2500;
     }
-    
-    .nav-menu.active { right: 0; }
-    
+
+    .nav-menu.active {
+        right: 0;
+    }
+
     .nav-menu .nav-list {
         flex-direction: column;
         gap: 2rem;
         align-items: flex-start;
     }
-    
-    .nav-link { font-size: 1.5rem; color: var(--primary); }
-    
-    .header-actions { display: none; } /* Hide trial button on small mobile nav for now */
 
-    .hero { padding-top: 140px; }
-    .hero-title { font-size: 3rem; }
-    .hero-badge { font-size: 2rem; }
-    .hero-subtitle { font-size: 1.3rem; }
-    
-    .section-title { font-size: 2.5rem; }
-    .grid { grid-template-columns: 1fr; }
-    
-    .contact-form { padding: 2rem; }
+    .nav-link {
+        font-size: 1.5rem;
+        color: var(--primary);
+    }
+
+    .header-actions {
+        display: none;
+    }
+
+    /* Hide trial button on small mobile nav for now */
+
+    .hero {
+        padding-top: 130px;
+        min-height: 80vh;
+        background-attachment: scroll;
+        /* Better for mobile performance */
+    }
+
+    .hero-title {
+        font-size: 3.2rem;
+        line-height: 1.3;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-badge {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.4rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 2.4rem;
+        line-height: 1.3;
+    }
+
+    .section-desc {
+        font-size: 1.2rem;
+        line-height: 1.7;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .contact-form {
+        padding: 2rem 1.5rem;
+    }
 }
-
-
