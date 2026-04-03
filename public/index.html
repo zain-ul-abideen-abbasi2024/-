@@ -15,6 +15,10 @@
         href="https://fonts.googleapis.com/css2?family=Gulzar&family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:wght@400;700&display=swap"
         rel="stylesheet">
 
+    <!-- Font Preload -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/nafeespp/urdu-fonts/JameelNooriNastaleeq.woff2" as="font"
+        type="font/woff2" crossorigin>
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -23,9 +27,73 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Critical Preloader CSS */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0b4a2b;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+        }
+
+        .loader-icon {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(212, 175, 55, 0.2);
+            border-top: 4px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loader-text {
+            color: #d4af37;
+            font-family: 'Amiri', serif;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        body.loaded #preloader {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        body {
+            overflow: hidden;
+            /* Hide scrollbar while loading */
+        }
+
+        body.loaded {
+            overflow: visible;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="loader-icon"></div>
+        <div class="loader-text">بِسْمِ اللَّهِ</div>
+    </div>
 
     <!-- Header -->
     <header class="header" id="header">

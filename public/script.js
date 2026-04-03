@@ -1,10 +1,16 @@
+window.addEventListener('load', () => {
+    document.body.classList.add('loaded');
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // AOS Initialization
-    AOS.init({
-        duration: 800,
-        once: true,
-        offset: 100
-    });
+    setTimeout(() => {
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    }, 100);
 
     const header = document.getElementById('header');
     const navMenu = document.getElementById('nav-menu');
@@ -33,14 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Global Smooth Scroll for ALL Hash Links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
+        anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
             if (targetId === '#') return;
-            
+
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
                 e.preventDefault();
-                
+
                 // Close mobile menu if open
                 if (navMenu && navMenu.classList.contains('active')) {
                     navMenu.classList.remove('active');
@@ -63,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. ScrollSpy: Highlight active nav link on scroll
     const sections = document.querySelectorAll('section[id]');
-    
+
     window.addEventListener('scroll', () => {
         let current = '';
         sections.forEach(section => {
@@ -86,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contactForm) {
         contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // UI state: Loading
             submitBtn.classList.add('submitting');
             submitBtn.disabled = true;
@@ -114,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     formMessage.className = 'form-success';
                     formMessage.style.display = 'block';
                     contactForm.reset();
-                    
+
                     // Hide message after 5 seconds
                     setTimeout(() => {
                         formMessage.style.display = 'none';
