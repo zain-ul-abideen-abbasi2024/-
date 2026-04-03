@@ -198,6 +198,21 @@ body {
     font-weight: 400;
 }
 
+/* Hero Buttons */
+.hero-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* Anti-Flicker for AOS on Hero (Desktop & Mobile) */
+.hero-content[data-aos] {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+}
+
 /* Standard Grid System */
 .grid {
     display: grid;
@@ -508,5 +523,20 @@ button {
 
     .contact-form {
         padding: 2rem 1.5rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        gap: 1.2rem;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    .hero-buttons .btn {
+        width: 100%;
+        padding: 0.9rem 1.5rem;
+        font-size: 1.15rem;
+        text-align: center;
     }
 }
